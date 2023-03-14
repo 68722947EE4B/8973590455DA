@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>경매장 모니터링</title>
+</head>
+
+<body>
+	<div>
+		<table>
+			<tbody>
+				<tr>
+					<td>
+						<label>불러오기</label>
+						<input type="file" onchange="loadFile(this.files[0])"><br>
+						<label>저장하기</label>
+						<input type="button" onclick="saveFile()" value="저장하기"><br>
+						<label>API Key</label>
+						<input type="text" id="APIKey"><br>
+						<label>검색할 아이템 갯수</label>
+						<input type="text" id="NumberOfSearchItems" style="width: 100px;"
+							onchange="setNumberOfSearchItems()" value="10"><br>
+						<label>옵션 복사</label>
+						<input type="text" id="CopyOptionsOriginal" style="width: 50px;">
+						<label>→</label>
+						<input type="text" id="CopyOptionsDestination" style="width: 50px;">
+						<input type="button" id="btnCopyOptions" onclick="CopyOptions()" value="복사하기"><br>
+						<label>콘솔 보기</label>
+						<input type="checkbox" id="chkViewConsoleLog">
+					</td>
+					<td id="tdUnitedPenalty">
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<br><br>
+	<div id="divTable" style="width:100%; height:250px; overflow:auto">
+		<table id="table1" width="1650" height="200" overflow="auto">
+			<tbody>
+				<tr id="tr1">
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div id="divButtons">
+		<br>
+		<input type="button" id="btnStart" value="시작">
+		<input type="button" id="btnDeleteLog" value="로그 삭제">
+		<label>현재 상태: </label>
+		<label id="lblCurrentStatus"></label>
+		<br>
+	</div>
+	<p id="items"></p>
+
+	<script src="https://code.jquery.com/jquery-3.6.3.js"
+		integrity="sha256-nQLuAZGRRcILA+6dMBOvcRh5Pe310sBpanc6+QBmyVM=" crossorigin="anonymous"></script>
+	<script>
+		var APIKey = '';
+		var TradeAllowCountLimit = 0;
+		var interfaceArraySize = 10;
+		var today = new Date();
+		const TotalOptions = {
+			"TradeAllowCountLimit": { "2": "2", "1": "1", "0": "0" },
+			"ItemGrade": { "전체": "", "고대": "고대", "유물": "유물", "전설": "전설" },
+			"CategoryCode": { "전체": 200000, "목걸이": 200010, "귀걸이": 200020, "반지": 200030 }, // "팔찌": 200040, "보석": 210000 
+			"statOption": { "전체": "", "치명": 15, "특화": 16, "신속": 18, "제압": 17, "인내": 19, "숙련": 20 },
+			"engravingOption": { "원한": 118, "굳은 의지": 123, "실드 관통": 237, "강령술": 243, "저주받은 인형": 247, "각성": 255, "안정된 상태": 111, "위기 모면": 140, "달인의 저력": 238, "중갑 착용": 240, "강화 방패": 242, "부러진 뼈": 245, "승부사": 248, "기습의 대가": 249, "마나의 흐름": 251, "돌격대장": 254, "약자 무시": 107, "정기 흡수": 109, "에테르 포식자": 110, "슈퍼 차지": 121, "구슬동자": 134, "예리한 둔기": 141, "불굴": 235, "여신의 가호": 239, "선수필승": 244, "급소 타격": 142, "분쇄의 주먹": 236, "폭발물 전문가": 241, "번개의 분노": 246, "바리케이드": 253, "마나 효율 증가": 168, "최대 마나 증가": 167, "탈출의 명수": 202, "결투의 대가": 288, "질량 증가": 295, "추진력": 296, "타격의 대가": 297, "시선 집중": 298, "아드레날린": 299, "속전속결": 300, "전문의": 301, "긴급구조": 302, "정밀 단도": 303, "공격력 감소": 800, "방어력 감소": 801, "공격속도 감소": 802, "이동속도 감소": 803, "광기": 125, "오의 강화": 127, "강화 무기": 129, "화력 강화": 130, "광전사의 비기": 188, "초심": 189, "극의: 체술": 190, "충격 단련": 191, "핸드거너": 192, "포격 강화": 193, "진실된 용맹": 194, "절실한 구원": 195, "점화": 293, "환류": 294, "분노의 망치": 196, "중력 수련": 197, "상급 소환사": 198, "넘치는 교감": 199, "황후의 은총": 200, "황제의 칙령": 201, "전투 태세": 224, "고독한 기사": 225, "세맥타통": 256, "역천지체": 257, "두 번째 동료": 258, "죽음의 습격": 259, "절정": 276, "절제": 277, "잔재된 기운": 278, "버스트": 279, "완벽한 억제": 280, "멈출 수 없는 충동": 281, "심판자": 282, "축복의 오라": 283, "아르데타인의 기술": 284, "진화의 유산": 285, "갈증": 286, "달의 소리": 287, "피스메이커": 289, "사냥의 시간": 290, "일격필살": 291, "오의난무": 292, "회귀": 305, "만개": 306, "질풍노도": 307, "이슬비": 308, "포식자": 309, "처단자": 310 },
+			"penaltyOption": { "전체": "", "공격력 감소": 800, "공격속도 감소": 802, "방어력 감소": 801, "이동속도 감소": 803 },
+			"braceletOption": { "물리 방어력": 1, "마법 방어력": 2, "최대 생명력": 3, "최대 마나": 4, "전투 중 생명력 회복량": 6, "속공": 26, "투자": 27, "반격": 28, "멸시": 29, "무시": 30, "반전": 31, "회생": 32, "긴급 수혈": 33, "응급 처치": 34, "앵콜": 35, "마나회수": 36, "오뚝이": 37, "돌진": 38, "강타": 39, "타격": 40 }
+		};
+		const interface = [
+			{ "label": "이름", "type": "text", "style": "width:120px;", "name": "", "id": "ItemName", "NewLine": "yes" },
+			{ "label": "거래 가능 횟수", "type": "select", "style": "", "name": "", "id": "TradeAllowCountLimit", "NewLine": "" },
+			{ "label": "등급", "type": "select", "style": "", "name": "", "id": "ItemGrade", "NewLine": "yes" },
+			{ "label": "품질", "type": "text", "style": "width:50px;", "name": "", "id": "ItemGradeQuality", "NewLine": "" },
+			{ "label": "종류", "type": "select", "style": "", "name": "", "id": "CategoryCode", "NewLine": "" },
+			{ "label": "스텟1", "type": "select", "style": "", "name": "0", "id": "statOption", "NewLine": "yes" },
+			{ "label": "최소", "type": "text", "style": "width:30px;", "name": "0MinValue", "id": "OptionRange", "NewLine": "" },
+			{ "label": "최대", "type": "text", "style": "width:30px;", "name": "0MaxValue", "id": "OptionRange", "NewLine": "" },
+			{ "label": "스텟2", "type": "select", "style": "", "name": "1", "id": "statOption", "NewLine": "yes" },
+			{ "label": "최소", "type": "text", "style": "width:30px;", "name": "1MinValue", "id": "OptionRange", "NewLine": "" },
+			{ "label": "최대", "type": "text", "style": "width:30px;", "name": "1MaxValue", "id": "OptionRange", "NewLine": "" },
+			{ "label": "각인1", "type": "text", "style": "width:100px;", "name": "2", "id": "engravingOption", "NewLine": "yes" },
+			{ "label": "최소", "type": "text", "style": "width:30px;", "name": "2MinValue", "id": "OptionRange", "NewLine": "" },
+			{ "label": "최대", "type": "text", "style": "width:30px;", "name": "2MaxValue", "id": "OptionRange", "NewLine": "" },
+			{ "label": "각인2", "type": "text", "style": "width:100px;", "name": "3", "id": "engravingOption", "NewLine": "yes" },
+			{ "label": "최소", "type": "text", "style": "width:30px;", "name": "3MinValue", "id": "OptionRange", "NewLine": "" },
+			{ "label": "최대", "type": "text", "style": "width:30px;", "name": "3MaxValue", "id": "OptionRange", "NewLine": "" },
+			{ "label": "패널티", "type": "select", "style": "", "name": "4", "id": "penaltyOption", "NewLine": "yes" },
+			{ "label": "최소", "type": "text", "style": "width:30px;", "name": "4MinValue", "id": "OptionRange", "NewLine": "" },
+			{ "label": "최대", "type": "text", "style": "width:30px;", "name": "4MaxValue", "id": "OptionRange", "NewLine": "" },
+			{ "label": "최대 가격", "type": "text", "style": "width:100px;", "name": "", "id": "BuyPriceLimit", "NewLine": "yes" },
+			{ "label": "검색 활성화", "type": "checkbox", "style": "", "name": "", "id": "isActive", "NewLine": "yes" }
+		];
+
+		var data = {
+			ItemLevelMin: 0,
+			ItemLevelMax: 1700,
+			ItemGradeQuality: "",
+			EtcOptions: [
+				{
+					// 스텟1
+					FirstOption: 2,
+					SecondOption: "",
+					MinValue: "",
+					MaxValue: ""
+				},
+				{
+					// 스텟2
+					FirstOption: 2,
+					SecondOption: "",
+					MinValue: "",
+					MaxValue: ""
+				},
+				{
+					//옵션1
+					FirstOption: 3,
+					SecondOption: "",
+					MinValue: "",
+					MaxValue: ""
+				},
+				{
+					//옵션2
+					FirstOption: 3,
+					SecondOption: "",
+					MinValue: "",
+					MaxValue: ""
+				},
+				{
+					//패널티
+					FirstOption: 6,
+					SecondOption: "",
+					MinValue: "",
+					MaxValue: ""
+				},
+			],
+			// 팔찌
+			// SkillOptions: [
+			// 	{
+			// 		FirstOption: 28090,
+			// 	}
+			// ],
+			Sort: 'BUY_PRICE',
+			CategoryCode: 200000,
+			CharacterClass: '',
+			ItemTier: 3,
+			ItemGrade: '',
+			ItemName: '',
+			PageNo: 1,
+			SortCondition: 'ASC'
+		};
+
+		// 인터페이스 초기화
+		var IA = new Array(interfaceArraySize).fill(0).map(() => new Array(interface.length));
+		initInterface();
+		function initInterface() {
+			var subDiv = null;
+			var tempLabel = null;
+			var tempOption = null;
+			var tempList = null;
+			var divInterface = null;
+			var tr1 = document.getElementById('tr1');
+			while (tr1.firstChild) {
+				tr1.removeChild(tr1.firstChild);
+			}
+			for (i = 0; i < interfaceArraySize; i++) {
+				divInterface = document.createElement('div');
+				divInterface.id = 'divInterface';
+				subDiv = document.createElement('div');
+				tempLabel = document.createElement('label');
+				tempLabel.innerText = String(i + 1);
+				subDiv.appendChild(tempLabel);
+				subDiv.style = "text-align: center;";
+				divInterface.appendChild(subDiv);
+				for (j = 0; j < interface.length; j++) {
+					if (interface[j]['NewLine'] == 'yes') {
+						subDiv = document.createElement('div');
+					}
+					for (key in interface[j]) {
+						if (key == 'label') {
+							tempLabel = document.createElement('label');
+							tempLabel.innerText = interface[j][key];
+							subDiv.appendChild(tempLabel);
+						} else {
+							if (interface[j]['type'] == 'text') {
+								if (key == 'type') {
+									IA[i][j] = document.createElement('input');
+									IA[i][j].type = 'text';
+								} else if (key != 'NewLine') {
+									IA[i][j][key] = interface[j][key];
+								}
+							} else if (interface[j]['type'] == 'select') {
+								if (key == 'type') {
+									IA[i][j] = document.createElement('select');
+								} else if (key == 'name' || key == 'id') {
+									IA[i][j][key] = interface[j][key];
+								}
+							} else if (interface[j]['type'] == 'checkbox') {
+								if (key == 'type') {
+									IA[i][j] = document.createElement('input');
+									IA[i][j].type = 'checkbox';
+								} else if (key == 'name' || key == 'id') {
+									IA[i][j][key] = interface[j][key];
+								}
+							}
+						}
+					}
+					if (interface[j]['type'] == 'select') {
+						tempList = TotalOptions[interface[j]['id']];
+						for (key in tempList) {
+							tempOption = document.createElement('option');
+							tempOption.innerText = key;
+							tempOption.value = tempList[key];
+							IA[i][j].appendChild(tempOption)
+						}
+					}
+					subDiv.appendChild(IA[i][j]);
+					divInterface.appendChild(subDiv);
+				}
+				var tableTd = document.createElement('td');
+				tableTd.appendChild(divInterface);
+				tableTd.width = "300";
+				tr1.appendChild(tableTd);
+			}
+			table1.width = 330 * interfaceArraySize;
+		}
+
+		// 통합 패널티 인터페이스 초기화
+		var tempLabel = null;
+		var tempOption = null;
+		let UnitedPenalty = new Array(2).fill(0).map(() => new Array(5).fill(0));
+		var UnitedPenaltyOptionText = ["3", "2", "1", "허용 안함"];
+		var UnitedPenaltyOptionValue = [3, 2, 1, 0];
+		var UnitedPenaltyName = ["통합 패널티", "공격력 감소", "공격속도 감소", "방어력 감소", "이동속도 감소"];
+		var isUnitedPenaltyOn = { '통합 패널티': false, '공격력 감소': false, '공격속도 감소': false, '방어력 감소': false, '이동속도 감소': false };
+		var UnitedPenaltyValue = { '공격력 감소': 3, '공격속도 감소': 3, '방어력 감소': 3, '이동속도 감소': 3 };
+		var tdUnitedPenalty = document.getElementById('tdUnitedPenalty');
+		for (i = 0; i < 5; i++) {
+			UnitedPenalty[0][i] = document.createElement('input');
+			UnitedPenalty[0][i].type = 'checkbox';
+			UnitedPenalty[0][i].name = UnitedPenaltyName[i];
+			UnitedPenalty[0][i].id = 'chkUnitedPenalty';
+			UnitedPenalty[0][i].addEventListener('change', function () { UpdateUnitedPenalty(this) });
+		}
+		for (i = 1; i < 5; i++) {
+			UnitedPenalty[1][i] = document.createElement('select');
+			UnitedPenalty[1][i].name = UnitedPenaltyName[i];
+			UnitedPenalty[1][i].id = 'optUnitedPenalty';
+			for (j = 0; j < UnitedPenaltyOptionText.length; j++) {
+				tempOption = document.createElement('option');
+				tempOption.innerText = UnitedPenaltyOptionText[j];
+				tempOption.value = UnitedPenaltyOptionValue[j];
+				UnitedPenalty[1][i].appendChild(tempOption);
+			}
+			UnitedPenalty[1][i].value = 3;
+			UnitedPenalty[1][i].addEventListener('change', function () { UpdateUnitedPenalty(this) });
+		}
+		var tempDiv = document.createElement('div');
+		tempLabel = document.createElement('label');
+		tempLabel.innerText = "통합 패널티 - 적용하기 : ";
+		tempDiv.appendChild(tempLabel);
+		tempDiv.appendChild(UnitedPenalty[0][0]);
+		tdUnitedPenalty.appendChild(tempDiv);
+		for (i = 1; i < 5; i++) {
+			tempDiv = document.createElement('div');
+			tempLabel = document.createElement('label');
+			tempLabel.innerText = UnitedPenaltyName[i];
+			tempDiv.appendChild(tempLabel);
+			tempDiv.appendChild(UnitedPenalty[0][i]);
+			tempDiv.appendChild(UnitedPenalty[1][i]);
+			tdUnitedPenalty.appendChild(tempDiv);
+		}
+		function UpdateUnitedPenalty(obj) {
+			if (obj.id == 'chkUnitedPenalty') {
+				isUnitedPenaltyOn[obj.name] = obj.checked;
+			} else if (obj.id == 'optUnitedPenalty') {
+				UnitedPenaltyValue[obj.name] = Number(obj.value);
+			}
+		}
+
+		// 검색할 아이템 갯수 수정
+		function setNumberOfSearchItems() {
+			var tempArray = new Array(IA.length).fill(0).map(() => new Array(IA[0].length));
+			for (i = 0; i < IA.length; i++) {
+				for (j = 0; j < IA[i].length; j++) {
+					if (IA[i][j].type == 'checkbox') {
+						tempArray[i][j] = IA[i][j].checked;
+					} else {
+						tempArray[i][j] = IA[i][j].value;
+					}
+				}
+			}
+			interfaceArraySize = Number(document.getElementById("NumberOfSearchItems").value);
+			IA = new Array(interfaceArraySize).fill(0).map(() => new Array(interface.length));
+			initInterface();
+			var tempLength = Object.keys(tempArray).length;
+			if (interfaceArraySize < tempLength) {
+				tempLength = interfaceArraySize;
+			}
+			for (i = 0; i < tempLength; i++) {
+				for (j = 0; j < tempArray[i].length; j++) {
+					if (tempArray[i][j] == true || tempArray[i][j] == false) {
+						IA[i][j].checked = tempArray[i][j];
+					} else {
+						IA[i][j].value = tempArray[i][j];
+					}
+				}
+			}
+
+		}
+
+		// 옵션 복사
+		function CopyOptions() {
+			var iOriginal = Number(document.getElementById("CopyOptionsOriginal").value) - 1;
+			var iDestination = Number(document.getElementById("CopyOptionsDestination").value) - 1;
+			for (j = 0; j < IA[iOriginal].length; j++) {
+				if (IA[iOriginal][j].type == 'checkbox') {
+					IA[iDestination][j].checked = IA[iOriginal][j].checked;
+				} else {
+					IA[iDestination][j].value = IA[iOriginal][j].value;
+				}
+			}
+		}
+
+		// 로그 삭제 버튼
+		var btnDeleteLog = document.getElementById("btnDeleteLog");
+		btnDeleteLog.addEventListener('click', DeleteLog);
+		function DeleteLog() {
+			$("P#items").empty();
+		}
+
+		// 시작/정지 버튼
+		var btnStart = document.getElementById("btnStart");
+		var isPause = true;
+		var ScanRepeaterInterval = null;
+		var maxScanOrder = 0;
+		var isActiveArray = new Array();
+		btnStart.addEventListener('click', UpdateBtnStart);
+		function UpdateBtnStart() {
+			if (btnStart.value == '시작') {
+				APIKey = document.getElementById("APIKey").value;
+				if (APIKey != '') {
+					btnStart.value = '정지';
+					var CountActiveOptions = 0;
+					for (i = 0; i < 5; i++) {
+						isUnitedPenaltyOn[UnitedPenaltyName[i]] = UnitedPenalty[0][i].checked;
+					}
+					for (i = 1; i < 5; i++) {
+						UnitedPenaltyValue[UnitedPenaltyName[i]] = UnitedPenalty[1][i].value;
+					}
+					isActiveArray = new Array();
+					if (isPause == true) {
+						isPause = false;
+						for (i = 0; i < IA.length; i++) {
+							if (IA[i][IA[i].length - 1].checked == true) {
+								isActiveArray[CountActiveOptions] = i;
+								CountActiveOptions += 1;
+							}
+						}
+						maxScanOrder = isActiveArray.length;
+						currentScanOrder = -1;
+						ScanRepeaterInterval = setInterval(ScanRepeater, 1000);
+					}
+				} else {
+					alert('API Key를 입력해주세요.');
+				}
+			} else {
+				lblCurrentStatus.innerText = '정지';
+				btnStart.value = '시작';
+				if (isPause == false) {
+					isPause = true;
+					clearInterval(ScanRepeaterInterval);
+				}
+			}
+		}
+		var lblCurrentStatus = document.getElementById("lblCurrentStatus");
+		var currentScanOrder = -1;
+		function ScanRepeater() {
+			currentScanOrder += 1;
+			if (currentScanOrder >= maxScanOrder) {
+				currentScanOrder = 0;
+			}
+			for (j = 0; j < IA[isActiveArray[currentScanOrder]].length; j++) {
+				UpdateData(IA[isActiveArray[currentScanOrder]][j]);
+			}
+			submitSearch();
+		}
+
+		// 불러오기
+		async function loadFile(file) {
+			var loadJson = await file.text();
+			var loadArray = JSON.parse(loadJson);
+			interfaceArraySize = loadArray[Object.keys(loadArray).length - 1]["NumberOfSearchItems"];
+			if (interfaceArraySize == null) {
+				interfaceArraySize = Object.keys(loadArray).length - 1;
+			}
+			document.getElementById("NumberOfSearchItems").value = interfaceArraySize;
+			IA = new Array(interfaceArraySize).fill(0).map(() => new Array(interface.length));
+			initInterface();
+			for (i = 0; i < Object.keys(loadArray).length - 1; i++) {
+				for (j = 0; j < loadArray[i].length; j++) {
+					if (loadArray[i][j] == true || loadArray[i][j] == false) {
+						IA[i][j].checked = loadArray[i][j];
+					} else {
+						IA[i][j].value = loadArray[i][j];
+					}
+				}
+			}
+			document.getElementById("APIKey").value = loadArray[i]["APIKey"];
+			APIKey = loadArray[i]["APIKey"];
+			if (loadArray[i]["isUnitedPenaltyOn"] != null && loadArray[i]["UnitedPenaltyValue"] != null) {
+				isUnitedPenaltyOn = loadArray[i]["isUnitedPenaltyOn"];
+				UnitedPenaltyValue = loadArray[i]["UnitedPenaltyValue"];
+				for (i = 0; i < 5; i++) {
+					UnitedPenalty[0][i].checked = isUnitedPenaltyOn[UnitedPenaltyName[i]];
+				}
+				for (i = 1; i < 5; i++) {
+					UnitedPenalty[1][i].value = UnitedPenaltyValue[UnitedPenaltyName[i]];
+				}
+			}
+		}
+
+		// 저장
+		function saveFile() {
+			var saveArray = new Array(IA.length + 1).fill(0).map(() => new Array(IA[0].length));
+			for (i = 0; i < IA.length; i++) {
+				for (j = 0; j < IA[i].length; j++) {
+					if (IA[i][j].type == 'checkbox') {
+						saveArray[i][j] = IA[i][j].checked;
+					} else {
+						saveArray[i][j] = IA[i][j].value;
+					}
+				}
+			}
+			saveArray[i] = {
+				"APIKey": APIKey,
+				"NumberOfSearchItems": interfaceArraySize,
+				"isUnitedPenaltyOn": isUnitedPenaltyOn,
+				"UnitedPenaltyValue": UnitedPenaltyValue
+			};
+			var json = Object.assign({}, saveArray);
+			downloadTemplate('LostArkAuctionData.txt', JSON.stringify(json));
+		}
+		//Download HTML Template Source
+		function downloadTemplate(filename, text) {
+			let element = document.createElement('a');
+			element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+			element.setAttribute('download', filename);
+			element.style.display = 'none';
+			document.body.appendChild(element);
+			element.click();
+			document.body.removeChild(element);
+		}
+
+		// 입력값 변경 시 data변수에 적용
+		var BuyPriceLimit = 0;
+		function UpdateData(obj) {
+			// 이름, 등급, 품질, 종류
+			if (obj.id == 'ItemName' || obj.id == 'ItemGrade' || obj.id == 'ItemGradeQuality' || obj.id == 'CategoryCode') {
+				data[obj.id] = obj.value;
+				// 거래 가능 횟수
+			} else if (obj.id == 'TradeAllowCountLimit') {
+				TradeAllowCountLimit = obj.value;
+				// 스텟, 패널티
+			} else if (obj.id == 'statOption' || obj.id == 'penaltyOption') {
+				data.EtcOptions[obj.name.substr(0, 1)].SecondOption = obj.value;
+				// 각인
+			} else if (obj.id == 'engravingOption') {
+				data.EtcOptions[obj.name.substr(0, 1)].SecondOption = TotalOptions[obj.id][obj.value];
+				// 옵션 최소최대값 변경
+			} else if (obj.id == 'OptionRange') {
+				if (obj.value != null) {
+					data.EtcOptions[obj.name.substr(0, 1)][obj.name.substr(1, 8)] = obj.value;
+				} else {
+					data.EtcOptions[obj.name.substr(0, 1)][obj.name.substr(1, 8)] = "";
+				}
+				// 최대 가격
+			} else if (obj.id == 'BuyPriceLimit') {
+				BuyPriceLimit = obj.value;
+			}
+		}
+
+		var xhr = new XMLHttpRequest();
+		function submitSearch() {
+			xhr.open('POST', 'https://developer-lostark.game.onstove.com/auctions/items', true);
+			xhr.setRequestHeader('accept', 'application/json');
+			xhr.setRequestHeader('authorization', 'bearer ' + APIKey);
+			xhr.setRequestHeader('content-Type', 'application/json');
+			xhr.onreadystatechange = callbackFunction;
+			xhr.send(JSON.stringify(data));
+		}
+
+		var CurrentPage = 0;
+		var DetectCount = 0;
+		var TotalCount = 0;
+		var ResultText = "";
+		function callbackFunction() {
+			if (xhr.readyState == 4 & xhr.status == 200) {
+				var tempPenalty = null;
+				var isUnitedPenaltyPassed = true;
+				var msg = JSON.parse(xhr.responseText);
+				var msgString = xhr.responseText;
+				if (document.getElementById("chkViewConsoleLog").checked == true) {
+					console.log(msg);
+				}
+				var NumberOfItems = msg.TotalCount;
+				TotalCount = msg.TotalCount;
+				// if (parseInt(NumberOfItems / 10) >= MaxPages*10){
+				// 	NumberOfItems = MaxPages*10
+				// }
+				// for (j = 0; j < parseInt((NumberOfItems-1)/10); j++){
+
+				// }
+				if (NumberOfItems > 10) {
+					NumberOfItems = 10;
+				}
+				// if (CurrentPage == 0) {
+				// 	$("P#items").empty();
+				// }
+				if (msg.Items) {
+					msg.Items = msg.Items.reverse();
+				}
+				for (i = 0; i < NumberOfItems; i++) {
+					BuyPrice = msg.Items[i].AuctionInfo.BuyPrice;
+					TradeAllowCount = msg.Items[i].AuctionInfo.TradeAllowCount;
+					tempPenalty = msg.Items[i].Options.filter(function (e) { return e.IsPenalty === true; })[0];
+					if (isUnitedPenaltyOn['통합 패널티'] == true
+						&& isUnitedPenaltyOn[tempPenalty.OptionName] == true
+						&& tempPenalty.Value > UnitedPenaltyValue[tempPenalty.OptionName]) {
+						isUnitedPenaltyPassed = false;
+					} else {
+						isUnitedPenaltyPassed = true;
+					}
+					if ((BuyPrice <= BuyPriceLimit || BuyPriceLimit == 0) && TradeAllowCount >= TradeAllowCountLimit && isUnitedPenaltyPassed == true) {
+						DetectCount += 1;
+						ResultText = "";
+						ResultText += msg.Items[i].Name + "<br>";
+						ResultText += "구매 시 거래" + TradeAllowCount + "회 가능<br>";
+						ResultText += "등급: " + msg.Items[i].Grade + "<br>";
+						ResultText += "품질: " + msg.Items[i].GradeQuality + "<br>";
+						OptionLength = msg.Items[i].Options.length;
+						for (j = 0; j < OptionLength; j++) {
+							if (msg.Items[i].Options[j].IsPenalty == false) {
+								ResultText += msg.Items[i].Options[j].OptionName + ": " + msg.Items[i].Options[j].Value + "<br>";
+							}
+						}
+						for (j = 0; j < OptionLength; j++) {
+							if (msg.Items[i].Options[j].IsPenalty == true) {
+								ResultText += "<font color='red'>" + msg.Items[i].Options[j].OptionName + ": " + msg.Items[i].Options[j].Value + "</font><br>";
+							}
+						}
+						ResultText += "가격: " + BuyPrice.toLocaleString('ko-KR') + "<br><br>";
+						$("P#items").prepend(ResultText);
+					}
+				}
+				if (DetectCount > 0) {
+					DetectCount = 0;
+					today = new Date();
+					$("P#items").prepend("<br>===[" + today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds() + "] " + String(isActiveArray[currentScanOrder] + 1) + "번 옵션 검색 결과===<br>");
+				}
+				lblCurrentStatus.innerText = String(isActiveArray[currentScanOrder] + 1) + "번 검색중 (" + TotalCount + "건 검색)";
+			}
+		}
+
+		window.onload = function () {
+			// submitSearch();
+			lblCurrentStatus.innerText = '정지';
+		}
+	</script>
+</body>
+
+</html>
