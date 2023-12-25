@@ -32,8 +32,10 @@
 						<label>→</label>
 						<input type="text" id="CopyOptionsDestination" style="width: 50px;">
 						<input type="button" id="btnCopyOptions" onclick="CopyOptions()" value="복사하기"><br>
+						<!--
 						<label>콘솔 보기</label>
 						<input type="checkbox" id="chkViewConsoleLog">
+						-->
 					</td>
 					<td id="tdUnitedPenalty">
 					</td>
@@ -69,10 +71,10 @@
 		var today = new Date();
 		const TotalOptions = {
 			"TradeAllowCountLimit": { "2": "2", "1": "1", "0": "0" },
-			"ItemGrade": { "전체": "", "고대": "고대", "유물": "유물", "전설": "전설" },
+			"ItemGrade": { "고대": "고대", "유물": "유물" },
 			"CategoryCode": { "전체": 200000, "목걸이": 200010, "귀걸이": 200020, "반지": 200030 }, // "팔찌": 200040, "보석": 210000 
 			"statOption": { "전체": "", "치명": 15, "특화": 16, "신속": 18, "제압": 17, "인내": 19, "숙련": 20 },
-			"engravingOption": { "원한": 118, "굳은 의지": 123, "실드 관통": 237, "강령술": 243, "저주받은 인형": 247, "각성": 255, "안정된 상태": 111, "위기 모면": 140, "달인의 저력": 238, "중갑 착용": 240, "강화 방패": 242, "부러진 뼈": 245, "승부사": 248, "기습의 대가": 249, "마나의 흐름": 251, "돌격대장": 254, "약자 무시": 107, "정기 흡수": 109, "에테르 포식자": 110, "슈퍼 차지": 121, "구슬동자": 134, "예리한 둔기": 141, "불굴": 235, "여신의 가호": 239, "선수필승": 244, "급소 타격": 142, "분쇄의 주먹": 236, "폭발물 전문가": 241, "번개의 분노": 246, "바리케이드": 253, "마나 효율 증가": 168, "최대 마나 증가": 167, "탈출의 명수": 202, "결투의 대가": 288, "질량 증가": 295, "추진력": 296, "타격의 대가": 297, "시선 집중": 298, "아드레날린": 299, "속전속결": 300, "전문의": 301, "긴급구조": 302, "정밀 단도": 303, "공격력 감소": 800, "방어력 감소": 801, "공격속도 감소": 802, "이동속도 감소": 803, "광기": 125, "오의 강화": 127, "강화 무기": 129, "화력 강화": 130, "광전사의 비기": 188, "초심": 189, "극의: 체술": 190, "충격 단련": 191, "핸드거너": 192, "포격 강화": 193, "진실된 용맹": 194, "절실한 구원": 195, "점화": 293, "환류": 294, "분노의 망치": 196, "중력 수련": 197, "상급 소환사": 198, "넘치는 교감": 199, "황후의 은총": 200, "황제의 칙령": 201, "전투 태세": 224, "고독한 기사": 225, "세맥타통": 256, "역천지체": 257, "두 번째 동료": 258, "죽음의 습격": 259, "절정": 276, "절제": 277, "잔재된 기운": 278, "버스트": 279, "완벽한 억제": 280, "멈출 수 없는 충동": 281, "심판자": 282, "축복의 오라": 283, "아르데타인의 기술": 284, "진화의 유산": 285, "갈증": 286, "달의 소리": 287, "피스메이커": 289, "사냥의 시간": 290, "일격필살": 291, "오의난무": 292, "회귀": 305, "만개": 306, "질풍노도": 307, "이슬비": 308, "포식자": 309, "처단자": 310 },
+			"engravingOption": {"원한":118,"굳은 의지":123,"실드 관통":237,"강령술":243,"저주받은 인형":247,"각성":255,"안정된 상태":111,"위기 모면":140,"달인의 저력":238,"중갑 착용":240,"강화 방패":242,"부러진 뼈":245,"승부사":248,"기습의 대가":249,"마나의 흐름":251,"돌격대장":254,"약자 무시":107,"정기 흡수":109,"에테르 포식자":110,"슈퍼 차지":121,"구슬동자":134,"예리한 둔기":141,"불굴":235,"여신의 가호":239,"선수필승":244,"급소 타격":142,"분쇄의 주먹":236,"폭발물 전문가":241,"번개의 분노":246,"바리케이드":253,"마나 효율 증가":168,"최대 마나 증가":167,"탈출의 명수":202,"결투의 대가":288,"질량 증가":295,"추진력":296,"타격의 대가":297,"시선 집중":298,"아드레날린":299,"속전속결":300,"전문의":301,"긴급구조":302,"정밀 단도":303,"공격력 감소":800,"방어력 감소":801,"공격속도 감소":802,"이동속도 감소":803,"광기":125,"오의 강화":127,"강화 무기":129,"화력 강화":130,"광전사의 비기":188,"초심":189,"극의: 체술":190,"충격 단련":191,"권왕파천무":314,"수라의 길":315,"핸드거너":192,"포격 강화":193,"진실된 용맹":194,"절실한 구원":195,"점화":293,"환류":294,"분노의 망치":196,"중력 수련":197,"상급 소환사":198,"넘치는 교감":199,"황후의 은총":200,"황제의 칙령":201,"전투 태세":224,"고독한 기사":225,"세맥타통":256,"역천지체":257,"두 번째 동료":258,"죽음의 습격":259,"절정":276,"절제":277,"잔재된 기운":278,"버스트":279,"완벽한 억제":280,"멈출 수 없는 충동":281,"심판자":282,"축복의 오라":283,"아르데타인의 기술":284,"진화의 유산":285,"갈증":286,"달의 소리":287,"피스메이커":289,"사냥의 시간":290,"일격필살":291,"오의난무":292,"회귀":305,"만개":306,"질풍노도":307,"이슬비":308,"포식자":309,"처단자":310,"만월의 집행자":311,"그믐의 경계":312},
 			"penaltyOption": { "전체": "", "공격력 감소": 800, "공격속도 감소": 802, "방어력 감소": 801, "이동속도 감소": 803 },
 			"braceletOption": { "물리 방어력": 1, "마법 방어력": 2, "최대 생명력": 3, "최대 마나": 4, "전투 중 생명력 회복량": 6, "속공": 26, "투자": 27, "반격": 28, "멸시": 29, "무시": 30, "반전": 31, "회생": 32, "긴급 수혈": 33, "응급 처치": 34, "앵콜": 35, "마나회수": 36, "오뚝이": 37, "돌진": 38, "강타": 39, "타격": 40 }
 		};
@@ -233,6 +235,7 @@
 			table1.width = 330 * interfaceArraySize;
 		}
 
+		/*
 		// 통합 패널티 인터페이스 초기화
 		var tempLabel = null;
 		var tempOption = null;
@@ -285,6 +288,7 @@
 				UnitedPenaltyValue[obj.name] = Number(obj.value);
 			}
 		}
+		*/
 
 		// 검색할 아이템 갯수 수정
 		function setNumberOfSearchItems() {
@@ -350,12 +354,14 @@
 				if (APIKey != '') {
 					btnStart.value = '정지';
 					var CountActiveOptions = 0;
+					/*
 					for (i = 0; i < 5; i++) {
 						isUnitedPenaltyOn[UnitedPenaltyName[i]] = UnitedPenalty[0][i].checked;
 					}
 					for (i = 1; i < 5; i++) {
 						UnitedPenaltyValue[UnitedPenaltyName[i]] = UnitedPenalty[1][i].value;
 					}
+					*/
 					isActiveArray = new Array();
 					if (isPause == true) {
 						isPause = false;
@@ -422,6 +428,7 @@
 			}
 			document.getElementById("APIKey").value = loadArray[i]["APIKey"];
 			APIKey = loadArray[i]["APIKey"];
+			/*
 			if (loadArray[i]["isUnitedPenaltyOn"] != null && loadArray[i]["UnitedPenaltyValue"] != null) {
 				isUnitedPenaltyOn = loadArray[i]["isUnitedPenaltyOn"];
 				UnitedPenaltyValue = loadArray[i]["UnitedPenaltyValue"];
@@ -432,6 +439,7 @@
 					UnitedPenalty[1][i].value = UnitedPenaltyValue[UnitedPenaltyName[i]];
 				}
 			}
+			*/
 		}
 
 		// 저장
@@ -449,8 +457,10 @@
 			saveArray[i] = {
 				"APIKey": APIKey,
 				"NumberOfSearchItems": interfaceArraySize,
+				/*
 				"isUnitedPenaltyOn": isUnitedPenaltyOn,
 				"UnitedPenaltyValue": UnitedPenaltyValue
+				*/
 			};
 			var json = Object.assign({}, saveArray);
 			downloadTemplate('LostArkAuctionData.txt', JSON.stringify(json));
@@ -514,9 +524,11 @@
 				var isUnitedPenaltyPassed = true;
 				var msg = JSON.parse(xhr.responseText);
 				var msgString = xhr.responseText;
+				/*
 				if (document.getElementById("chkViewConsoleLog").checked == true) {
 					console.log(msg);
 				}
+				*/
 				var NumberOfItems = msg.TotalCount;
 				TotalCount = msg.TotalCount;
 				// if (parseInt(NumberOfItems / 10) >= MaxPages*10){
@@ -538,6 +550,7 @@
 					BuyPrice = msg.Items[i].AuctionInfo.BuyPrice;
 					TradeAllowCount = msg.Items[i].AuctionInfo.TradeAllowCount;
 					tempPenalty = msg.Items[i].Options.filter(function (e) { return e.IsPenalty === true; })[0];
+					/*
 					if (isUnitedPenaltyOn['통합 패널티'] == true
 						&& isUnitedPenaltyOn[tempPenalty.OptionName] == true
 						&& tempPenalty.Value > UnitedPenaltyValue[tempPenalty.OptionName]) {
@@ -545,6 +558,7 @@
 					} else {
 						isUnitedPenaltyPassed = true;
 					}
+					*/
 					if ((BuyPrice <= BuyPriceLimit || BuyPriceLimit == 0) && TradeAllowCount >= TradeAllowCountLimit && isUnitedPenaltyPassed == true) {
 						DetectCount += 1;
 						ResultText = "";
